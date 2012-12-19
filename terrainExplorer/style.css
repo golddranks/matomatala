@@ -1,0 +1,25 @@
+#terrainexplorer canvas {
+    display: inline;
+    border: 1px solid #dddddd;
+    margin-left: auto;
+    margin-right: auto;
+    width: 640px;
+    height: 480px;
+}
+#collisionmap canvas {
+    display: inline;
+    border: 1px solid #dddddd;
+    margin-left: auto;
+    margin-right: auto;
+    width: 700px;
+    height: 500px;
+}
+
+section {
+	display: inline;
+}
+body {
+	display: block;
+	width: 1400px;
+	background-color: #dddddd;
+}

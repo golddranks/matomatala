@@ -5,7 +5,7 @@
 
 
 (function() {
-  var A, BLACK, BLUE, Bullet, CANVAS_HEIGHT, CANVAS_WIDTH, CYAN, Camera, Canvas, DOWN, Debug, ENTER, GREEN, GameObject, HALF_PIXEL, LEFT, MAGENTA, RED, RIGHT, SPACE, Ship, Terrain, UP, WHITE, YELLOW, ZERO_VECTOR, aa, bee, camera, createVector, debug, dotProduct, floorVector, game, loader, reflectVector, render, unitVector, vectorDifference, vectorEqual, vectorLength, vectorQuotient, vectorScale, vectorSum,
+  var A, BLACK, BLUE, CANVAS_HEIGHT, CANVAS_WIDTH, CYAN, Camera, Canvas, DOWN, Debug, ENTER, Explorer, GREEN, GameObject, HALF_PIXEL, LEFT, MAGENTA, RED, RIGHT, SPACE, Terrain, UP, WHITE, YELLOW, ZERO_VECTOR, aa, bee, camera, createVector, debug, dotProduct, floorVector, game, loader, reflectVector, render, unitVector, vectorDifference, vectorEqual, vectorLength, vectorQuotient, vectorScale, vectorSum,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -45,8 +45,8 @@
     return this.ctx.fillRect(point.x, point.y, 1, 1);
   };
 
-  Canvas.prototype.render = function(ctx, cam) {
-    return ctx.drawImage(this.canvas, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height);
+  Canvas.prototype.render = function(ctx) {
+    return ctx.drawImage(this.canvas, 0, 0);
   };
 
   Canvas.prototype.clear = function() {
@@ -189,13 +189,13 @@
     return GameObject.toBeDestroyed = [];
   };
 
-  GameObject.render = function(ctx) {
+  GameObject.render = function(ctx, canvas) {
     var object, _i, _len, _ref, _results;
     _ref = GameObject.objects;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       object = _ref[_i];
-      _results.push(object.render(ctx));
+      _results.push(object.render(ctx, canvas));
     }
     return _results;
   };
@@ -350,8 +350,8 @@
     return normal;
   };
 
-  Terrain.prototype.render = function(ctx, cam) {
-    return ctx.drawImage(this.terrain, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height);
+  Terrain.prototype.render = function(c, cam) {
+    return c.drawImage(this.terrain, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height);
   };
 
   Terrain.prototype.pointHit = function(coords) {
@@ -452,144 +452,15 @@
     return this.terrain_ctx.fill();
   };
 
-  Ship = function(position, terrain) {
-    Ship.__super__.constructor.call(this, position, terrain);
-    this.rotation = 0;
-    this.width = 16;
-    this.height = 16;
-    this.xAnimOffset = Math.round(-0.5 * this.width);
-    this.yAnimOffset = Math.round(-0.5 * this.height);
-    this.loadingBullet = 0;
-    this.img = new Image();
-    loader.asyncWaitForLoading(this.img);
-    this.img.src = "img/v.png";
+  Explorer = function(position, terrain) {
+    Explorer.__super__.constructor.call(this, position, terrain);
   };
 
-  __extends(Ship, GameObject);
+  __extends(Explorer, GameObject);
 
-  Ship.prototype.update = function() {
-    this.move();
-    return this.loadingBullet--;
-  };
-
-  Ship.prototype.render = function(ctx) {
-    ctx.save();
-    ctx.translateRound(this.position.x, this.position.y);
-    ctx.rotate(this.rotation);
-    ctx.drawImage(this.img, this.xAnimOffset, this.yAnimOffset);
-    return ctx.restore();
-  };
-
-  Ship.prototype.acc = function(amount) {
-    var acceleration;
-    acceleration = createVector(this.rotation, amount);
-    return this.velocity = vectorSum(this.velocity, acceleration);
-  };
-
-  Ship.prototype.dec = function(amount) {
-    var acceleration;
-    acceleration = createVector(this.rotation, -amount);
-    return this.velocity = vectorSum(this.velocity, acceleration);
-  };
-
-  Ship.prototype.rotate = function(amount) {
-    return this.rotation += amount;
-  };
-
-  Ship.prototype.shoot = function() {
-    if (this.loadingBullet <= 0) {
-      new Bullet(this.position, this.velocity, 40, this.rotation, this.terrain);
-      return this.loadingBullet = 10;
-    }
-  };
-
-  Bullet = function(position, parent_velocity, speed, direction, terrain) {
-    Bullet.__super__.constructor.call(this, position, terrain);
-    this.velocity = vectorSum(parent_velocity, createVector(direction, speed));
-    this.lifespan = 10;
-    this.lifestack = [this.position];
-    this.renderstack = [this.position];
-  };
-
-  __extends(Bullet, GameObject);
-
-  Bullet.prototype.update = function() {
-    this.move();
-    return this.clean();
-  };
-
-  Bullet.prototype.move = function(displacement) {
-    this.renderstack.push(this.position);
-    this.lifestack.push(this.position);
-    Bullet.__super__.move.call(this, displacement);
-    if (!(this.lifespan < 0)) {
-      this.renderstack.push(this.position);
-      return this.lifestack.push(this.position);
-    }
-  };
-
-  Bullet.prototype.bounce = function(a, b) {
-    var displacement;
-    this.lifespan--;
-    this.renderstack.push(this.position);
-    this.lifestack.push(this.position);
-    displacement = Bullet.__super__.bounce.call(this, a, b);
-    return displacement;
-  };
-
-  Bullet.prototype.render = function(ctx) {
-    var coords, point, stack, start_point, _i, _len, _ref;
-    stack = this.renderstack;
-    if (this.demo != null) {
-      console.log("rendering lifepath");
-      stack = this.lifestack;
-      console.log(stack);
-    }
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(255,255,255)";
-    start_point = vectorSum(floorVector(stack[0]), HALF_PIXEL);
-    ctx.moveTo(start_point.x, start_point.y);
-    _ref = stack.slice(1);
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      coords = _ref[_i];
-      point = vectorSum(floorVector(coords), HALF_PIXEL);
-      ctx.lineTo(point.x, point.y);
-    }
-    ctx.stroke();
-    return this.renderstack = [this.position];
-  };
-
-  Bullet.prototype.hitTest = function() {
-    var hit_coords, last_safe, _ref;
-    _ref = this.terrain.lineHit(this.x, this.y, this.x + this.dx, this.y + this.dy), hit_coords = _ref[0], last_safe = _ref[1];
-    if (hit_coords) {
-      this.destroy();
-      this.terrain.blow(hit_coords, 4);
-      debug.color = MAGENTA;
-      return debug.plot(coords[2][0], coords[2][1]);
-    }
-  };
-
-  Bullet.prototype.clean = function() {
-    if (this.position.x < 0) {
-      this.destroy();
-      return;
-    }
-    if (this.position.y < 0) {
-      this.destroy();
-      return;
-    }
-    if (this.position.x > this.terrain.width) {
-      this.destroy();
-      return;
-    }
-    if (this.position.y > this.terrain.height) {
-      this.destroy();
-      return;
-    }
-    if (this.lifespan < 0) {
-      return this.destroy();
-    }
+  Explorer.prototype.render = function(ctx, canvas) {
+    canvas.plot(this.position);
+    return canvas.drawArrow(this.position, this.terrain.detectCurvature(this.position));
   };
 
   /* Camera: a movable object which points to the centre of the place that is supposed to be "on-screen"
@@ -740,22 +611,34 @@
     /* Runtime logic
     */
 
-    var cam, canvas, commands, ctx, debug, keys, logic, player, render, terrain, tick;
+    var cam, canvas, commands, ctx, debug, explorer, keys, logic, render, terrain, tick;
     keys = {};
     commands = (function() {
       var cmd;
       cmd = {};
       cmd[UP] = function() {
-        return player.acc(0.18);
+        return explorer.move({
+          x: 0,
+          y: -1
+        });
       };
       cmd[DOWN] = function() {
-        return player.dec(0.18);
+        return explorer.move({
+          x: 0,
+          y: 1
+        });
       };
       cmd[LEFT] = function() {
-        return player.rotate(-0.06);
+        return explorer.move({
+          x: -1,
+          y: 0
+        });
       };
       cmd[RIGHT] = function() {
-        return player.rotate(0.06);
+        return explorer.move({
+          x: 1,
+          y: 0
+        });
       };
       cmd[SPACE] = function() {
         return player.shoot();
@@ -780,14 +663,15 @@
         }
       }
       GameObject.update();
-      return cam.focusTo(player.position);
+      return cam.focusTo(explorer.position);
     };
     render = function() {
       ctx.save();
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       terrain.render(ctx, cam);
       ctx.translateRound(-cam.position.x, -cam.position.y);
-      GameObject.render(ctx);
+      GameObject.render(ctx, canvas);
+      debug.render(ctx);
       return ctx.restore();
     };
     tick = function() {
@@ -798,26 +682,19 @@
     /* Initialization
     */
 
-    document.addEventListener("keydown", (function(eventInfo) {
+    $(document).keydown(function(eventInfo) {
       return keys[eventInfo.which] = true;
-    }), false);
-    document.addEventListener("keyup", (function(eventInfo) {
+    });
+    $(document).keyup(function(eventInfo) {
       return keys[eventInfo.which] = false;
-    }), false);
-    canvas = document.createElement("canvas");
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
-    ctx = canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-    canvas_container.appendChild(canvas);
-    ctx.translateRound = function(x, y) {
-      return this.translate(Math.floor(x), Math.floor(y));
-    };
+    });
+    canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT, canvas_container);
+    ctx = canvas.ctx;
     loader = loader(tick);
     loader.asyncWaitForLoading(game);
     terrain = new Terrain("img/terrain2.png", 1400, 1000);
     debug = new Debug(terrain.width, terrain.height);
-    player = new Ship({
+    explorer = new Explorer({
       x: 20,
       y: 100
     }, terrain);
@@ -837,7 +714,7 @@
 
   $(document).ready(function() {
     var container, _ref;
-    container = document.getElementById("shinkuunotsubasa");
+    container = document.getElementById("terrainexplorer");
     return _ref = game(container), debug = _ref[0], render = _ref[1], camera = _ref[2], _ref;
   });
 
