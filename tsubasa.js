@@ -5,19 +5,20 @@
 
 
 (function() {
-  var A, BLACK, BLUE, Bullet, CANVAS_HEIGHT, CANVAS_WIDTH, CYAN, Camera, Canvas, DOWN, Debug, ENTER, GREEN, GameObject, HALF_PIXEL, LEFT, MAGENTA, RED, RIGHT, SPACE, Ship, Terrain, UP, WHITE, YELLOW, ZERO_VECTOR, aa, bee, camera, createVector, debug, dotProduct, floorVector, game, loader, reflectVector, render, unitVector, vectorDifference, vectorEqual, vectorLength, vectorQuotient, vectorScale, vectorSum,
+  var A, BLACK, BLUE, Bullet, CANVAS_HEIGHT, CANVAS_WIDTH, CYAN, Camera, Canvas, DOWN, Debug, ENTER, FULL_ARC, GREEN, GameObject, HALF_PIXEL, LEFT, MAGENTA, NULL_VECTOR, RED, RIGHT, SPACE, Ship, Terrain, UP, Vector, VectorByDirection, WHITE, YELLOW, camera, debug, game, loader, render,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Canvas = function(width, height, container) {
+  Canvas = function(size, container) {
     this.canvas = document.createElement("canvas");
-    this.canvas.width = width;
-    this.canvas.height = height;
+    this.canvas.width = size.x;
+    this.canvas.height = size.y;
     this.ctx = this.canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;
     this.color = RED;
-    this.ctx.translateRound = function(x, y) {
-      return this.translate(Math.floor(x), Math.floor(y));
+    this.ctx.translateRound = function(coords) {
+      coords = coords.floor();
+      return this.translate(coords.x, coords.y);
     };
     if (container != null) {
       container.appendChild(this.canvas);
@@ -28,16 +29,16 @@
     this.ctx.strokeStyle = this.color;
     this.ctx.fillStyle = this.color;
     this.ctx.beginPath();
-    start_point = vectorSum(start_point, HALF_PIXEL);
-    end_point = vectorSum(end_point, HALF_PIXEL);
+    start_point = start_point.plus(HALF_PIXEL);
+    end_point = end_point.plus(HALF_PIXEL);
     this.ctx.moveTo(start_point.x, start_point.y);
     this.ctx.lineTo(end_point.x, end_point.y);
     return this.ctx.stroke();
   };
 
-  Canvas.prototype.drawRect = function(left_top_coords, width, height) {
+  Canvas.prototype.drawRect = function(left_top_coords, size) {
     this.ctx.fillStyle = this.color;
-    return this.ctx.fillRect(left_top_coords.x, left_top_coords.y, width, height);
+    return this.ctx.fillRect(left_top_coords.x, left_top_coords.y, size.x, size.y);
   };
 
   Canvas.prototype.plot = function(point) {
@@ -46,7 +47,7 @@
   };
 
   Canvas.prototype.render = function(ctx, cam) {
-    return ctx.drawImage(this.canvas, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height);
+    return ctx.drawImage(this.canvas, cam.position.x, cam.position.y, cam.size.x, cam.size.y, 0, 0, cam.size.x, cam.size.y);
   };
 
   Canvas.prototype.clear = function() {
@@ -54,98 +55,18 @@
   };
 
   Canvas.prototype.drawArrow = function(start_point, arrow) {
-    var i, length, unit, _i, _results;
-    unit = unitVector(arrow);
-    length = vectorLength(arrow);
+    var i, unit, _i, _ref, _results;
+    unit = arrow.unit();
     _results = [];
-    for (i = _i = 0; 0 <= length ? _i <= length : _i >= length; i = 0 <= length ? ++_i : --_i) {
-      _results.push(this.plot(vectorSum(start_point, vectorScale(unit, i))));
+    for (i = _i = 0, _ref = arrow.length(); 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+      _results.push(this.plot(start_point.plus(unit.scaledBy(i))));
     }
     return _results;
   };
 
-  dotProduct = function(a, b) {
-    return (a.x * b.x) + (a.y * b.y);
-  };
-
-  vectorSum = function(a, b) {
-    return {
-      x: a.x + b.x,
-      y: a.y + b.y
-    };
-  };
-
-  vectorDifference = function(a, b) {
-    return {
-      x: a.x - b.x,
-      y: a.y - b.y
-    };
-  };
-
-  vectorQuotient = function(a, divisor) {
-    return {
-      x: a.x / divisor,
-      y: a.y / divisor
-    };
-  };
-
-  vectorScale = function(a, multiplier) {
-    return {
-      x: a.x * multiplier,
-      y: a.y * multiplier
-    };
-  };
-
-  vectorLength = function(a) {
-    return Math.sqrt(a.x * a.x + a.y * a.y);
-  };
-
-  floorVector = function(a) {
-    return {
-      x: Math.floor(a.x),
-      y: Math.floor(a.y)
-    };
-  };
-
-  vectorEqual = function(a, b) {
-    if (a.x === b.x && a.y === b.y) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  unitVector = function(a) {
-    return vectorQuotient(a, vectorLength(a));
-  };
-
-  createVector = function(direction, length) {
-    return {
-      x: Math.sin(direction) * length,
-      y: -Math.cos(direction) * length
-    };
-  };
-
-  reflectVector = function(normal, incidence, bullet) {
-    var product, reflection;
-    normal = unitVector(normal);
-    product = dotProduct(normal, incidence);
-    if (!(product > 0)) {
-      reflection = vectorDifference(incidence, vectorScale(normal, 2 * product));
-    } else {
-      reflection = incidence;
-      debug.demo(bullet);
-      alert("kiven sisästä TODO");
-    }
-    return reflection;
-  };
-
   GameObject = function(position, terrain, velocity) {
     if (velocity == null) {
-      velocity = {
-        x: 0,
-        y: 0
-      };
+      velocity = new Vector(0, 0);
     }
     this.position = position;
     this.terrain = terrain;
@@ -208,47 +129,29 @@
     return this.move();
   };
 
-  aa = {
-    x: 1,
-    y: 1
-  };
-
-  bee = {
-    x: 1,
-    y: 1
-  };
-
   GameObject.prototype.move = function(displacement) {
     var hit_coords, last_safe, last_solid_pixel, reverse, root_of_normal, surface_normal, surplus_displacement, target_position, tip_of_normal, _ref, _ref1;
-    if (displacement == null) {
-      displacement = this.velocity;
-    }
     if (this.junnaus > 2) {
       alert("haistakaa vittu ku junnaa pahasti");
     }
-    target_position = vectorSum(this.position, displacement);
+    if (displacement == null) {
+      displacement = this.velocity.scaledBy(game.delta_time);
+    }
+    target_position = this.position.plus(displacement);
     _ref = this.terrain.lineHit(this.position, target_position), hit_coords = _ref[0], last_safe = _ref[1];
     if (!hit_coords) {
       this.position = target_position;
-      this.junnaus = 0;
-      return debug.clear();
+      return this.junnaus = 0;
     } else {
-      surface_normal = this.terrain.detectCurvature(last_safe);
-      surplus_displacement = vectorDifference(floorVector(target_position), last_safe);
-      if (!vectorEqual(last_safe, this.position)) {
+      surface_normal = this.terrain.detectCurvature(last_safe, hit_coords);
+      surplus_displacement = target_position.floor().minus(last_safe);
+      if (!last_safe.equals(this.position)) {
         this.position = last_safe;
         displacement = this.bounce(surface_normal, surplus_displacement);
-        debug.color = RED;
-        debug.plot(last_safe);
-        debug.color = GREEN;
-        debug.plot(hit_coords);
       } else {
         this.junnaus++;
-        tip_of_normal = vectorSum(hit_coords, surface_normal);
-        _ref1 = this.terrain.lineHit(hit_coords, tip_of_normal, reverse = true), root_of_normal = _ref1[0], last_solid_pixel = _ref1[1];
-        debug.color = WHITE;
-        debug.plot(tip_of_normal);
-        debug.plot(root_of_normal);
+        tip_of_normal = hit_coords.plus(surface_normal);
+        _ref1 = this.terrain.lineHit(hit_coords.plus(HALF_PIXEL), tip_of_normal.plus(HALF_PIXEL), reverse = true), root_of_normal = _ref1[0], last_solid_pixel = _ref1[1];
         this.position = root_of_normal;
         if (this.junnaus > 1) {
           console.log("Last safe position: ");
@@ -259,7 +162,6 @@
           console.log(displacement);
           console.log("velocity: ");
           console.log(this.velocity);
-          debug.demo(this);
           alert("jun jun 2");
         }
       }
@@ -269,8 +171,8 @@
 
   GameObject.prototype.bounce = function(surface_normal, surplus_displacement) {
     var displacement_reflection;
-    this.velocity = reflectVector(surface_normal, this.velocity, this);
-    return displacement_reflection = reflectVector(surface_normal, surplus_displacement, this);
+    this.velocity = this.velocity.reflectWith(surface_normal);
+    return displacement_reflection = surplus_displacement.reflectWith(surface_normal);
   };
 
   GameObject.prototype.render = function(ctx) {
@@ -282,7 +184,70 @@
     return GameObject.toBeDestroyed.push(this);
   };
 
-  Terrain = function(terrainFileName, width, height) {
+  Vector = function(x, y) {
+    this.x = x;
+    return this.y = y;
+  };
+
+  VectorByDirection = function(direction, length) {
+    return VectorByDirection.__super__.constructor.call(this, Math.sin(direction) * length, -Math.cos(direction) * length);
+  };
+
+  __extends(VectorByDirection, Vector);
+
+  Vector.prototype.dot = function(that) {
+    return (this.x * that.x) + (this.y * that.y);
+  };
+
+  Vector.prototype.plus = function(that) {
+    return new Vector(this.x + that.x, this.y + that.y);
+  };
+
+  Vector.prototype.minus = function(that) {
+    return new Vector(this.x - that.x, this.y - that.y);
+  };
+
+  Vector.prototype.per = function(divisor) {
+    return new Vector(this.x / divisor, this.y / divisor);
+  };
+
+  Vector.prototype.scaledBy = function(multiplier) {
+    return new Vector(this.x * multiplier, this.y * multiplier);
+  };
+
+  Vector.prototype.length = function() {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  };
+
+  Vector.prototype.floor = function() {
+    return new Vector(Math.floor(this.x), Math.floor(this.y));
+  };
+
+  Vector.prototype.unit = function() {
+    return this.per(this.length());
+  };
+
+  Vector.prototype.toString = function() {
+    return "x: " + this.x + " y: " + this.y;
+  };
+
+  Vector.prototype.equals = function(that) {
+    return this.x === that.x && this.y === that.y;
+  };
+
+  Vector.prototype.reflectWith = function(normal) {
+    var product, reflection;
+    normal = normal.unit();
+    product = this.dot(normal);
+    if (!(product > 0)) {
+      reflection = this.minus(normal.scaledBy(2 * product));
+    } else {
+      reflection = this;
+    }
+    return reflection;
+  };
+
+  Terrain = function(terrainFileName, size) {
     var coll_ctx, img, terrain_ctx;
     img = this.img = new Image();
     this.collisionMask = document.createElement('canvas');
@@ -291,12 +256,11 @@
     coll_ctx.fillStyle = "rgb(0,0,0)";
     this.terrain = document.createElement('canvas');
     terrain_ctx = this.terrain_ctx = this.terrain.getContext("2d");
-    this.width = width;
-    this.height = height;
-    this.collisionMask.width = width;
-    this.collisionMask.height = height;
-    this.terrain.width = width;
-    this.terrain.height = height;
+    this.size = size;
+    this.collisionMask.width = size.x;
+    this.collisionMask.height = size.y;
+    this.terrain.width = size.x;
+    this.terrain.height = size.y;
     loader.asyncWaitForLoading(this.img, function() {
       coll_ctx.drawImage(img, 0, 0);
       return terrain_ctx.drawImage(img, 0, 0);
@@ -305,13 +269,12 @@
   };
 
   Terrain.curvatureVectorField = (function() {
-    var fullArc, i, increment, radius, _i, _results;
-    fullArc = Math.PI * 2;
+    var direction, increment, radius, _i, _results;
     increment = Math.PI * 2 / 16;
     radius = 2;
     _results = [];
-    for (i = _i = 0; 0 <= fullArc ? _i <= fullArc : _i >= fullArc; i = _i += increment) {
-      _results.push(createVector(i, radius));
+    for (direction = _i = 0; 0 <= FULL_ARC ? _i <= FULL_ARC : _i >= FULL_ARC; direction = _i += increment) {
+      _results.push(new VectorByDirection(direction, radius));
     }
     return _results;
   })();
@@ -321,10 +284,7 @@
     vectors = [];
     for (x = _i = -3; _i <= 3; x = ++_i) {
       for (y = _j = -3; _j <= 3; y = ++_j) {
-        vectors = vectors.concat({
-          x: x,
-          y: y
-        });
+        vectors = vectors.concat(new Vector(x, y));
       }
     }
     return vectors;
@@ -336,27 +296,23 @@
     _ref = Terrain.curvatureVectorField2;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       vector = _ref[_i];
-      pixel_coord = floorVector(vectorSum(air_coords, vector));
+      pixel_coord = (air_coords.plus(vector)).floor();
       pixel = this.coll_ctx.getImageData(pixel_coord.x, pixel_coord.y, 1, 1).data[0];
       if (pixel === 0) {
         freeVectors.push(vector);
       }
     }
-    normal = createVector(0, 0);
+    normal = new Vector(0, 0);
     for (_j = 0, _len1 = freeVectors.length; _j < _len1; _j++) {
       v = freeVectors[_j];
-      normal = vectorSum(normal, v);
+      normal = normal.plus(v);
     }
     return normal;
   };
 
-  Terrain.prototype.render = function(ctx, cam) {
-    return ctx.drawImage(this.terrain, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height);
-  };
-
   Terrain.prototype.pointHit = function(coords) {
     var imgData;
-    coords = floorVector(coords);
+    coords = coords.floor();
     imgData = this.coll_ctx.getImageData(coords.x, coords.y, 1, 1);
     if (imgData.data[0] > 0) {
       return coords;
@@ -392,14 +348,8 @@
       indexCorrect = -indexCorrect;
     }
     tolerance = (errorCorrect - errorIncrement) / 2;
-    lastSafe = {
-      x: NaN,
-      y: NaN
-    };
-    hit_point = {
-      x: NaN,
-      y: NaN
-    };
+    lastSafe = new Vector(NaN, NaN);
+    hit_point = new Vector(NaN, NaN);
     if ((!reverse && data[indexRow + indexCol] > 0) || (reverse && data[indexRow + indexCol] === 0)) {
       hit_point.x = rect_x + (indexCol / xIncrement);
       hit_point.y = rect_y + (indexRow / yIncrement);
@@ -442,12 +392,13 @@
   };
 
   Terrain.prototype.blow = function(coords, radius) {
+    coords = coords.plus(HALF_PIXEL);
     this.coll_ctx.beginPath();
-    this.coll_ctx.arc(coords.x + 0.5, coords.y + 0.5, radius, 0, Math.PI * 2, true);
+    this.coll_ctx.arc(coords.x, coords.y, radius, 0, FULL_ARC, true);
     this.coll_ctx.closePath();
     this.coll_ctx.fill();
     this.terrain_ctx.beginPath();
-    this.terrain_ctx.arc(coords.x + 0.5, coords.y + 0.5, radius, 0, Math.PI * 2, true);
+    this.terrain_ctx.arc(coords.x, coords.y, radius, 0, FULL_ARC, true);
     this.terrain_ctx.closePath();
     return this.terrain_ctx.fill();
   };
@@ -469,7 +420,7 @@
 
   Ship.prototype.update = function() {
     this.move();
-    return this.loadingBullet--;
+    return this.loadingBullet - game.delta_time;
   };
 
   Ship.prototype.render = function(ctx) {
@@ -482,30 +433,33 @@
 
   Ship.prototype.acc = function(amount) {
     var acceleration;
-    acceleration = createVector(this.rotation, amount);
-    return this.velocity = vectorSum(this.velocity, acceleration);
+    amount *= game.delta_time;
+    acceleration = new VectorByDirection(this.rotation, amount);
+    return this.velocity = this.velocity.plus(acceleration);
   };
 
   Ship.prototype.dec = function(amount) {
     var acceleration;
-    acceleration = createVector(this.rotation, -amount);
-    return this.velocity = vectorSum(this.velocity, acceleration);
+    amount *= game.delta_time;
+    acceleration = new VectorByDirection(this.rotation, -amount);
+    return this.velocity = this.velocity.plus(acceleration);
   };
 
   Ship.prototype.rotate = function(amount) {
+    amount = amount * game.delta_time;
     return this.rotation += amount;
   };
 
   Ship.prototype.shoot = function() {
-    if (this.loadingBullet <= 0) {
+    if (this.loadingBullet < 0) {
       new Bullet(this.position, this.velocity, 40, this.rotation, this.terrain);
-      return this.loadingBullet = 10;
+      return this.loadingBullet = 1;
     }
   };
 
   Bullet = function(position, parent_velocity, speed, direction, terrain) {
     Bullet.__super__.constructor.call(this, position, terrain);
-    this.velocity = vectorSum(parent_velocity, createVector(direction, speed));
+    this.velocity = parent_velocity.plus(new VectorByDirection(direction, speed));
     this.lifespan = 10;
     this.lifestack = [this.position];
     this.renderstack = [this.position];
@@ -547,27 +501,16 @@
     }
     ctx.beginPath();
     ctx.strokeStyle = "rgb(255,255,255)";
-    start_point = vectorSum(floorVector(stack[0]), HALF_PIXEL);
+    start_point = stack[0].floor().plus(HALF_PIXEL);
     ctx.moveTo(start_point.x, start_point.y);
     _ref = stack.slice(1);
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       coords = _ref[_i];
-      point = vectorSum(floorVector(coords), HALF_PIXEL);
+      point = coords.floor().plus(HALF_PIXEL);
       ctx.lineTo(point.x, point.y);
     }
     ctx.stroke();
     return this.renderstack = [this.position];
-  };
-
-  Bullet.prototype.hitTest = function() {
-    var hit_coords, last_safe, _ref;
-    _ref = this.terrain.lineHit(this.x, this.y, this.x + this.dx, this.y + this.dy), hit_coords = _ref[0], last_safe = _ref[1];
-    if (hit_coords) {
-      this.destroy();
-      this.terrain.blow(hit_coords, 4);
-      debug.color = MAGENTA;
-      return debug.plot(coords[2][0], coords[2][1]);
-    }
   };
 
   Bullet.prototype.clean = function() {
@@ -596,17 +539,16 @@
   */
 
 
-  Camera = function(position, viewport_width, viewport_height, terrain) {
-    this.position = position;
-    this.width = viewport_width;
-    this.height = viewport_height;
+  Camera = function(viewport_size, terrain) {
+    this.position = new Vector(0, 0);
+    this.size = viewport_size;
     this.terrain = terrain;
   };
 
   Camera.prototype.focusTo = function(coords) {
     var x, y;
-    x = coords.x - (this.width / 2);
-    y = coords.y - (this.height / 2);
+    x = coords.x - (this.size.x / 2);
+    y = coords.y - (this.size.y / 2);
     if (x < 0) {
       x = 0;
     }
@@ -619,10 +561,15 @@
     if (y + this.height > this.terrain.height) {
       y = this.terrain.height - this.height;
     }
-    return this.position = floorVector({
-      x: x,
-      y: y
-    });
+    return this.position = new Vector(x, y).floor();
+  };
+
+  Camera.prototype.render = function(ctx) {
+    ctx.save();
+    ctx.drawImage(this.terrain.terrain, this.position.x, this.position.y, this.size.x, this.size.y, 0, 0, this.size.x, this.size.y);
+    ctx.translateRound(-this.position.x, -this.position.y);
+    GameObject.render(ctx);
+    return ctx.restore();
   };
 
   /* loader: keeps list of things that have to load before the game can start
@@ -683,19 +630,15 @@
 
   A = 65;
 
-  CANVAS_WIDTH = 160;
+  CANVAS_WIDTH = 320;
 
-  CANVAS_HEIGHT = 120;
+  CANVAS_HEIGHT = 240;
 
-  ZERO_VECTOR = {
-    x: 0,
-    y: 0
-  };
+  NULL_VECTOR = new Vector(0, 0);
 
-  HALF_PIXEL = {
-    x: 0.5,
-    y: 0.5
-  };
+  HALF_PIXEL = new Vector(0.5, 0.5);
+
+  FULL_ARC = Math.PI * 2;
 
   RED = "#FF0000";
 
@@ -717,8 +660,9 @@
   */
 
 
-  Debug = function(w, h) {
-    return Debug.__super__.constructor.call(this, w, h);
+  Debug = function(width, height) {
+    Debug.__super__.constructor.call(this, width, height);
+    return this.color = RED;
   };
 
   __extends(Debug, Canvas);
@@ -732,6 +676,22 @@
     return render();
   };
 
+  Debug.prototype.showLines = function() {
+    var x, y, _i, _results;
+    _results = [];
+    for (x = _i = -10; _i <= 10; x = ++_i) {
+      _results.push((function() {
+        var _j, _results1;
+        _results1 = [];
+        for (y = _j = -10; _j <= 10; y = ++_j) {
+          _results1.push(terrain.lineHit(150 + (x * 12), 150 + (y * 12), 150 + (x * 12) + x, 150 + (y * 12) + y));
+        }
+        return _results1;
+      })());
+    }
+    return _results;
+  };
+
   /* game: a container object for the basic game logic
   */
 
@@ -740,31 +700,28 @@
     /* Runtime logic
     */
 
-    var cam, canvas, commands, ctx, debug, keys, logic, player, render, terrain, tick;
+    var cam, canvas, commands, ctx, keys, logic, player, render, terrain, tick, updateFPS;
     keys = {};
     commands = (function() {
       var cmd;
       cmd = {};
       cmd[UP] = function() {
-        return player.acc(0.18);
+        return player.acc(150);
       };
       cmd[DOWN] = function() {
-        return player.dec(0.18);
+        return player.dec(150);
       };
       cmd[LEFT] = function() {
-        return player.rotate(-0.06);
+        return player.rotate(-3);
       };
       cmd[RIGHT] = function() {
-        return player.rotate(0.06);
+        return player.rotate(3);
       };
       cmd[SPACE] = function() {
         return player.shoot();
       };
       cmd[ENTER] = function() {
-        return player.velocity = {
-          x: 0,
-          y: 0
-        };
+        return player.velocity = NULL_VECTOR;
       };
       cmd[A] = function() {
         return debug.clear();
@@ -783,17 +740,25 @@
       return cam.focusTo(player.position);
     };
     render = function() {
-      ctx.save();
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      terrain.render(ctx, cam);
-      ctx.translateRound(-cam.position.x, -cam.position.y);
-      GameObject.render(ctx);
-      return ctx.restore();
+      cam.render(ctx);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(game.fps, 10, 10);
+      return ctx.fillText(player.velocity, 10, 30);
+    };
+    updateFPS = function() {
+      var elapsed_time;
+      elapsed_time = (new Date().getTime() - game.last_fps_update_time) / 1000;
+      game.last_fps_update_time = game.tick_time;
+      game.fps = Math.round(game.elapsed_tick_count / elapsed_time);
+      return game.elapsed_tick_count = 0;
     };
     tick = function() {
+      requestAnimFrame(tick);
+      game.delta_time = (new Date().getTime() - game.tick_time) / 1000;
+      game.tick_time = new Date().getTime();
+      game.elapsed_tick_count++;
       logic();
-      render();
-      return requestAnimFrame(tick);
+      return render();
     };
     /* Initialization
     */
@@ -809,22 +774,21 @@
     canvas.height = CANVAS_HEIGHT;
     ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
     canvas_container.appendChild(canvas);
     ctx.translateRound = function(x, y) {
       return this.translate(Math.floor(x), Math.floor(y));
     };
     loader = loader(tick);
     loader.asyncWaitForLoading(game);
-    terrain = new Terrain("img/terrain2.png", 1400, 1000);
-    debug = new Debug(terrain.width, terrain.height);
-    player = new Ship({
-      x: 20,
-      y: 100
-    }, terrain);
-    cam = new Camera({
-      x: 60,
-      y: 60
-    }, CANVAS_WIDTH, CANVAS_HEIGHT, terrain);
+    terrain = new Terrain("img/terrain2.png", new Vector(1400, 1000));
+    player = new Ship(new Vector(20, 100), terrain);
+    cam = new Camera(new Vector(CANVAS_WIDTH, CANVAS_HEIGHT), terrain);
+    game.tick_time = new Date().getTime();
+    game.elapsed_tick_count = 0;
+    game.fps = 0;
+    game.last_fps_update_time = 0;
+    setInterval(updateFPS, 500);
     game.onload();
     return [debug, render, cam];
   };

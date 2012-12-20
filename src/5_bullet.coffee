@@ -1,6 +1,6 @@
 Bullet = (position, parent_velocity, speed, direction, terrain) ->
 	super(position, terrain)
-	this.velocity = vectorSum(parent_velocity, createVector(direction, speed))
+	this.velocity = parent_velocity.plus new VectorByDirection(direction, speed)
 	this.lifespan = 10
 	this.lifestack = [this.position]
 	this.renderstack = [this.position]
@@ -38,21 +38,13 @@ Bullet::render = (ctx) ->
 		console.log stack
 	ctx.beginPath()
 	ctx.strokeStyle = "rgb(255,255,255)"
-	start_point = vectorSum(floorVector(stack[0]), HALF_PIXEL)
+	start_point = stack[0].floor().plus HALF_PIXEL
 	ctx.moveTo(start_point.x, start_point.y)
 	for coords in stack[1..]
-		point = vectorSum(floorVector(coords), HALF_PIXEL)
+		point = coords.floor().plus HALF_PIXEL
 		ctx.lineTo(point.x, point.y)
 	ctx.stroke()
 	this.renderstack = [this.position]
-
-Bullet::hitTest = () ->
-	[hit_coords, last_safe] = this.terrain.lineHit(this.x, this.y, this.x+this.dx, this.y+this.dy)
-	if hit_coords
-		this.destroy()
-		this.terrain.blow(hit_coords, 4)
-		debug.color = MAGENTA
-		debug.plot(coords[2][0], coords[2][1])
 
 Bullet::clean = ->
 	if this.position.x < 0

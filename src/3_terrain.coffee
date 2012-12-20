@@ -1,4 +1,4 @@
-Terrain = (terrainFileName, width, height) ->
+Terrain = (terrainFileName, size) ->
 	img = this.img = new Image()
 	this.collisionMask = document.createElement('canvas')
 	document.getElementById("collisionmap").appendChild(this.collisionMask)
@@ -6,48 +6,42 @@ Terrain = (terrainFileName, width, height) ->
 	coll_ctx.fillStyle = "rgb(0,0,0)"
 	this.terrain = document.createElement('canvas')
 	terrain_ctx = this.terrain_ctx = this.terrain.getContext("2d")
-	this.width = width
-	this.height = height
-	this.collisionMask.width = width
-	this.collisionMask.height = height
-	this.terrain.width = width
-	this.terrain.height = height
+	this.size = size
+	this.collisionMask.width = size.x
+	this.collisionMask.height = size.y
+	this.terrain.width = size.x
+	this.terrain.height = size.y
 	loader.asyncWaitForLoading(this.img, -> coll_ctx.drawImage(img, 0, 0); terrain_ctx.drawImage(img, 0, 0))
 	this.img.src = terrainFileName
 
 Terrain.curvatureVectorField = (->
-	fullArc = Math.PI*2
 	increment = (Math.PI*2/16)
 	radius = 2
-	for i in [0..fullArc] by increment
-		createVector(i, radius)
+	for direction in [0..FULL_ARC] by increment
+		new VectorByDirection(direction, radius)
 )()
 
 Terrain.curvatureVectorField2 = (->
 	vectors = []
 	for x in [-3..3]
-		vectors = vectors.concat({x: x, y: y}) for y in [-3..3]
+		vectors = vectors.concat(new Vector(x, y)) for y in [-3..3]
 	return vectors
 )()
-#console.log Terrain.curvatureVectorField2
 
 Terrain::detectCurvature = (air_coords, solid_coords) -> ## returns a normal vector of a terrain surface
 	freeVectors = []
 	for vector in Terrain.curvatureVectorField2
-		pixel_coord = floorVector(vectorSum(air_coords, vector))
+		pixel_coord = (air_coords.plus vector).floor()
 		pixel = this.coll_ctx.getImageData(pixel_coord.x, pixel_coord.y, 1, 1).data[0]
 		if pixel == 0
 			freeVectors.push(vector)
-	normal = createVector(0,0)
+	normal = new Vector(0,0)
 	for v in freeVectors
-		normal = vectorSum(normal, v)
+		normal = normal.plus v
 	return normal
 
-Terrain::render = (ctx, cam) ->
-	ctx.drawImage(this.terrain, cam.position.x, cam.position.y, cam.width, cam.height, 0, 0, cam.width, cam.height)
-
 Terrain::pointHit = (coords) ->
-	coords = floorVector(coords)
+	coords = coords.floor()
 	imgData = this.coll_ctx.getImageData(coords.x, coords.y, 1, 1)
 	if imgData.data[0] > 0
 		return coords
@@ -56,7 +50,6 @@ Terrain::pointHit = (coords) ->
 	
 
 Terrain::lineHit = (start_point, end_point, reverse = false) ->		## Tests a hit with terrain collision map utilizing Bresenham's optimised line drawing algorithm
-
 	rect_x = Math.floor(Math.min(start_point.x, end_point.x))	## Since getImageData needs it's rectangles coordinates start from left-top corner ..
 	rect_y = Math.floor(Math.min(start_point.y, end_point.y))	## ...let's take the minimum coordinates of the vector
 	rect_width = Math.round(Math.max(start_point.x, end_point.x)+0.5) - rect_x
@@ -81,8 +74,8 @@ Terrain::lineHit = (start_point, end_point, reverse = false) ->		## Tests a hit 
 		indexCorrect = -indexCorrect				## Correcting upwards
 
 	tolerance = (errorCorrect - errorIncrement)/2
-	lastSafe = {x: NaN, y: NaN}
-	hit_point = {x: NaN, y: NaN}
+	lastSafe = new Vector(NaN, NaN)
+	hit_point = new Vector(NaN, NaN)
 	
 	if (not reverse and data[indexRow + indexCol] > 0) or (reverse and data[indexRow + indexCol] == 0)
 			## The red channel is not 0, so it's opaque! Collision!
@@ -132,12 +125,13 @@ Terrain::lineHit = (start_point, end_point, reverse = false) ->		## Tests a hit 
 	return false
 
 Terrain::blow = (coords, radius) ->
+	coords = coords.plus HALF_PIXEL
 	this.coll_ctx.beginPath()
-	this.coll_ctx.arc(coords.x+0.5, coords.y+0.5, radius, 0, Math.PI*2, true)
+	this.coll_ctx.arc(coords.x, coords.y, radius, 0, FULL_ARC, true)
 	this.coll_ctx.closePath()
 	this.coll_ctx.fill()
 	this.terrain_ctx.beginPath()
-	this.terrain_ctx.arc(coords.x+0.5, coords.y+0.5, radius, 0, Math.PI*2, true)
+	this.terrain_ctx.arc(coords.x, coords.y, radius, 0, FULL_ARC, true)
 	this.terrain_ctx.closePath()
 	this.terrain_ctx.fill()
  

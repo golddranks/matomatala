@@ -18,11 +18,13 @@ SPACE = 32
 ENTER = 13
 A = 65
 
-CANVAS_WIDTH = 160
-CANVAS_HEIGHT = 120
+CANVAS_WIDTH = 320
+CANVAS_HEIGHT = 240
 
-ZERO_VECTOR = {x:0, y:0}
-HALF_PIXEL = {x:0.5, y:0.5}
+NULL_VECTOR = new Vector(0, 0)
+HALF_PIXEL = new Vector(0.5, 0.5)
+
+FULL_ARC = Math.PI*2
 
 RED = "#FF0000"
 GREEN = "#00FF00"
@@ -37,8 +39,9 @@ BLACK = "#000000"
 
 ### Debug: a canvas for drawing overlay debug information, graphs etc. ###
 
-Debug = (w, h) ->
-	super(w, h)
+Debug = (width, height) ->
+	super(width, height)
+	this.color = RED
 
 Debug extends Canvas
 
@@ -49,6 +52,11 @@ Debug::demo = (bullet) ->
 	camera.focusTo(bullet.position)
 	this.drawArrow(bullet.position, bullet.velocity)
 	render()
+
+Debug::showLines = ->
+	for x in [-10..10]
+		for y in [-10..10]
+			terrain.lineHit(150+(x*12), 150+(y*12), 150+(x*12)+x, 150+(y*12)+y)
 
 
 ### game: a container object for the basic game logic ###
@@ -62,18 +70,13 @@ game = (canvas_container) ->
 
 	commands = ( -> 
 		cmd = {}
-		cmd[UP] = -> player.acc(0.18)
-		cmd[DOWN] = -> player.dec(0.18)
-		cmd[LEFT] = -> player.rotate(-0.06)
-		cmd[RIGHT] = -> player.rotate(0.06)
+		cmd[UP] = -> player.acc(150)
+		cmd[DOWN] = -> player.dec(150)
+		cmd[LEFT] = -> player.rotate(-3)
+		cmd[RIGHT] = -> player.rotate(3)
 		cmd[SPACE] = -> player.shoot()
-		cmd[ENTER] = -> player.velocity = {x:0, y:0}
+		cmd[ENTER] = -> player.velocity = NULL_VECTOR
 		cmd[A] = -> debug.clear()
-#	->
-#			window.joo = true
-#			for x in [-10..10]
-#				for y in [-10..10]
-#					terrain.lineHit(150+(x*12), 150+(y*12), 150+(x*12)+x, 150+(y*12)+y)
 		return cmd
 		)()
 
@@ -84,20 +87,25 @@ game = (canvas_container) ->
 		cam.focusTo(player.position);
 
 	render = ->
-		ctx.save()
-		ctx.clearRect(0,0, CANVAS_WIDTH, CANVAS_HEIGHT);
-		terrain.render(ctx, cam)
-		ctx.translateRound(-cam.position.x, -cam.position.y)
-		GameObject.render(ctx)
+		cam.render(ctx)
 #		debug.render(ctx, cam)
-		ctx.restore()
+		ctx.fillStyle = "#FFFFFF"
+		ctx.fillText(game.fps,10,10);
+		ctx.fillText(player.velocity,10,30);
+		
+	updateFPS = ->
+		elapsed_time = (new Date().getTime() - game.last_fps_update_time)/1000 # convert ms to seconds
+		game.last_fps_update_time = game.tick_time
+		game.fps = Math.round(game.elapsed_tick_count/elapsed_time)
+		game.elapsed_tick_count = 0
 
 	tick = ->
+		requestAnimFrame(tick)
+		game.delta_time = (new Date().getTime() - game.tick_time)/1000
+		game.tick_time = new Date().getTime()
+		game.elapsed_tick_count++
 		logic()
 		render()
-		requestAnimFrame(tick)
-
-
 
 	### Initialization ###
 
@@ -110,6 +118,7 @@ game = (canvas_container) ->
 	canvas.height = CANVAS_HEIGHT
 	ctx = canvas.getContext("2d")
 	ctx.imageSmoothingEnabled = false
+	ctx.webkitImageSmoothingEnabled = false
 	canvas_container.appendChild(canvas)
 
 	ctx.translateRound = (x, y) ->
@@ -118,12 +127,16 @@ game = (canvas_container) ->
 	loader = loader(tick)
 	loader.asyncWaitForLoading(game)
 
-	terrain = new Terrain("img/terrain2.png", 1400, 1000)
-	debug = new Debug(terrain.width, terrain.height)
-	player = new Ship({x: 20, y: 100}, terrain)
-	cam = new Camera({x: 60, y: 60}, CANVAS_WIDTH, CANVAS_HEIGHT, terrain)
+	terrain = new Terrain("img/terrain2.png", new Vector(1400, 1000))
+#	debug = new Debug(terrain.width, terrain.height)
+	player = new Ship(new Vector(20, 100), terrain)
+	cam = new Camera(new Vector(CANVAS_WIDTH, CANVAS_HEIGHT), terrain)
 
-
+	game.tick_time = new Date().getTime()
+	game.elapsed_tick_count = 0
+	game.fps = 0
+	game.last_fps_update_time = 0
+	setInterval(updateFPS, 500)
 
 	game.onload()					## So the game is ready to run.
 

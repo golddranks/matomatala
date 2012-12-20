@@ -15,7 +15,7 @@ Ship extends GameObject
 
 Ship::update = ->
 	this.move()
-	this.loadingBullet--
+	this.loadingBullet - game.delta_time
 
 Ship::render = (ctx) ->
 	ctx.save()
@@ -25,17 +25,20 @@ Ship::render = (ctx) ->
 	ctx.restore()
 
 Ship::acc = (amount) ->
-	acceleration = createVector(this.rotation, amount)
-	this.velocity = vectorSum(this.velocity, acceleration)
+	amount *= game.delta_time
+	acceleration = new VectorByDirection(this.rotation, amount)
+	this.velocity = this.velocity.plus acceleration
 
 Ship::dec = (amount) ->
-	acceleration = createVector(this.rotation, -amount)
-	this.velocity = vectorSum(this.velocity, acceleration)
+	amount *= game.delta_time
+	acceleration = new VectorByDirection(this.rotation, -amount)
+	this.velocity = this.velocity.plus acceleration
 
 Ship::rotate = (amount) ->
-	this.rotation += amount 
+	amount = amount * game.delta_time
+	this.rotation += amount
 
 Ship::shoot = ->
-	if this.loadingBullet <= 0
+	if this.loadingBullet < 0
 		new Bullet(this.position, this.velocity, 40, this.rotation, this.terrain)
-		this.loadingBullet = 10
+		this.loadingBullet = 1
