@@ -1,47 +1,58 @@
-Vector = (x, y) ->
-	this.x = x
-	this.y = y
+class Vector
+	constructor: (x, y) ->
+		@x = x
+		@y = y
+		return this
 
-VectorByDirection = (direction, length) ->
-	super(Math.sin(direction) * length, -Math.cos(direction) * length)
 
-VectorByDirection extends Vector
 
-Vector::dot = (that) ->
-	return ( this.x * that.x ) + ( this.y * that.y )
+	### WITH SIDE-EFFECTS ###
 
-Vector::plus = (that) ->
-	return new Vector(this.x + that.x, this.y + that.y )
+	increment: (that) ->
+		@x = @x + that.x
+		@y = @y + that.y
+		return this
 
-Vector::minus = (that) ->
-	return new Vector(this.x - that.x, this.y - that.y)
+	decrement: (that) ->
+		@x = @x - that.x
+		@y = @y - that.y
+		return this
 
-Vector::per = (divisor) ->
-	return new Vector(this.x / divisor, this.y / divisor )
+	scale: (scalar) ->
+		@x *= scalar
+		@y *= scalar
+		return this
 
-Vector::scaledBy = (multiplier) ->
-	return new Vector(this.x * multiplier, this.y * multiplier)
 
-Vector::length = ->
-	return Math.sqrt( this.x*this.x + this.y*this.y )
 
-Vector::floor = ->
-	return new Vector(Math.floor(this.x), Math.floor(this.y))
+	### WITHOUT SIDE-EFFECTS ###
 
-Vector::unit = ->
-	return this.per this.length() 
+	plus: (that) ->
+		new Vector(@x + that.x, @y + that.y)
 
-Vector::toString = ->
-	return "x: #{this.x} y: #{this.y}"
+	minus: (that) ->
+		new Vector(@x - that.x, @y - that.y)
 
-Vector::equals = (that) ->
-	return (this.x == that.x and this.y == that.y)
+	per: (scalar) ->
+		new Vector(@x / scalar, @y / scalar)
 
-Vector::reflectWith = (normal) ->
-	normal = normal.unit()
-	product = this.dot normal
-	unless product > 0	# In normal case, the dot product is negative (the angle between normal and incidence is over 90 degrees)
-		reflection = this.minus normal.scaledBy 2*product
-	else				# BUT if it happens to be positive, we are having an odd situation.
-		reflection = this		# so we just don't reflect it
-	return reflection
+	times: (scalar) ->
+		new Vector(@x * scalar, @y * scalar)
+
+	clone: ->
+		new Vector(@x, @y)
+
+	length: ->
+		return Math.sqrt( @x * @x  +  @y * @y )
+
+	floor: ->
+		new Vector(Math.floor(@x), Math.floor(@y))
+
+	unit: ->
+		return this.per this.length() 
+
+	toString: ->
+		return "x: #{@x} y: #{@y}"
+
+	equals: (that) ->
+		return (@x == that.x and @y == that.y)
