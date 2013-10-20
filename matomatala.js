@@ -971,22 +971,19 @@
     };
 
     function MenuNamu(callback) {
+      var label;
       this.supers();
       this.Renderable(this.image);
-      this.Position(new Vector(Math.random() * CANVAS_WIDTH * 0.8 + CANVAS_WIDTH * 0.1, Math.random() * CANVAS_HEIGHT * 0.6 + (CANVAS_HEIGHT * 0.3)));
+      this.Position(new Vector(Math.random() * CANVAS_WIDTH * 0.8 + CANVAS_WIDTH * 0.1, Math.random() * CANVAS_HEIGHT * 0.35 + (CANVAS_HEIGHT * 0.4)));
       this.Size(new Vector(16, 16));
       this.relocate();
       this.callback = callback;
-      this.label = new Label(this.callback.title, this.position.minus(new Vector(0, 13)));
+      label = new Label(this.callback.title, this.position.minus(new Vector(0, 13)));
+      game.hud.add(label);
     }
 
     MenuNamu.prototype.getsEaten = function() {
       return this.callback();
-    };
-
-    MenuNamu.prototype.render = function(ctx) {
-      Renderable.prototype.render.call(this, ctx);
-      return this.label.render(ctx);
     };
 
     MenuNamu.prototype.relocate = function() {
@@ -1007,164 +1004,6 @@
     };
 
     return MenuNamu;
-
-  })();
-
-  Player = (function() {
-
-    Player.extend(BaseObject);
-
-    Player.prototype.up = function() {
-      var _ref;
-      return (_ref = this.snake) != null ? _ref.up() : void 0;
-    };
-
-    Player.prototype.down = function() {
-      var _ref;
-      return (_ref = this.snake) != null ? _ref.down() : void 0;
-    };
-
-    Player.prototype.left = function() {
-      var _ref;
-      return (_ref = this.snake) != null ? _ref.left() : void 0;
-    };
-
-    Player.prototype.right = function() {
-      var _ref;
-      return (_ref = this.snake) != null ? _ref.right() : void 0;
-    };
-
-    Player.prototype.spawn = function() {
-      return this.snake = new Snake(this, this.position.clone());
-    };
-
-    function Player(x, y, name) {
-      this.spawn = __bind(this.spawn, this);
-
-      this.right = __bind(this.right, this);
-
-      this.left = __bind(this.left, this);
-
-      this.down = __bind(this.down, this);
-
-      this.up = __bind(this.up, this);
-      this.position = new Vector(x, y);
-      this.name = name;
-      this.score = new Score(this);
-      this.dead_snake = null;
-    }
-
-    Player.prototype.died = function() {
-      this.dead_snake = this.snake;
-      this.snake = null;
-      setTimeout(this.spawn, 2100);
-      setTimeout(this.dead_snake.disposeBody, 1700);
-      return this.score.reset();
-    };
-
-    return Player;
-
-  })();
-
-  Score = (function() {
-
-    Score.extend(BaseObject);
-
-    function Score(player) {
-      this.i = 0;
-      this.player = player;
-    }
-
-    Score.prototype.add = function(n) {
-      this.i += n;
-      if (this.i >= game.winningScore) {
-        return game.declareWinner(this.player);
-      }
-    };
-
-    Score.prototype.reset = function() {
-      return this.i = 0;
-    };
-
-    Score.prototype.toString = function() {
-      return this.i;
-    };
-
-    return Score;
-
-  })();
-
-  HUD = (function() {
-
-    HUD.extend(Renderer);
-
-    function HUD() {
-      this.supers();
-      this.labels = [];
-    }
-
-    HUD.prototype.render = function(ctx) {
-      var l, _i, _len, _ref, _results;
-      _ref = this.labels;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        l = _ref[_i];
-        _results.push(l.render(ctx));
-      }
-      return _results;
-    };
-
-    HUD.prototype.add = function(label) {
-      return this.labels.push(label);
-    };
-
-    return HUD;
-
-  })();
-
-  Label = (function() {
-
-    Label.extend(BaseObject);
-
-    Label.extend(Renderable);
-
-    Label.extend(Position);
-
-    function Label(text, pos, font, align, colour, stroke) {
-      if (font == null) {
-        font = "bold 20px sans-serif";
-      }
-      if (align == null) {
-        align = "center";
-      }
-      if (colour == null) {
-        colour = "#FFFFFF";
-      }
-      if (stroke == null) {
-        stroke = false;
-      }
-      this.supers;
-      this.text = text;
-      this.Position(pos);
-      this.font = font;
-      this.align = align;
-      this.colour = colour;
-      this.stroke = stroke;
-    }
-
-    Label.prototype.render = function(ctx) {
-      ctx.font = this.font;
-      ctx.textAlign = this.align;
-      ctx.fillStyle = this.colour;
-      ctx.fillText(this.text, this.position.x, this.position.y);
-      if (this.stroke) {
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = this.stroke;
-        return ctx.strokeText(this.text, this.position.x, this.position.y);
-      }
-    };
-
-    return Label;
 
   })();
 
@@ -1554,6 +1393,164 @@
     };
 
     return Wall;
+
+  })();
+
+  Player = (function() {
+
+    Player.extend(BaseObject);
+
+    Player.prototype.up = function() {
+      var _ref;
+      return (_ref = this.snake) != null ? _ref.up() : void 0;
+    };
+
+    Player.prototype.down = function() {
+      var _ref;
+      return (_ref = this.snake) != null ? _ref.down() : void 0;
+    };
+
+    Player.prototype.left = function() {
+      var _ref;
+      return (_ref = this.snake) != null ? _ref.left() : void 0;
+    };
+
+    Player.prototype.right = function() {
+      var _ref;
+      return (_ref = this.snake) != null ? _ref.right() : void 0;
+    };
+
+    Player.prototype.spawn = function() {
+      return this.snake = new Snake(this, this.position.clone());
+    };
+
+    function Player(x, y, name) {
+      this.spawn = __bind(this.spawn, this);
+
+      this.right = __bind(this.right, this);
+
+      this.left = __bind(this.left, this);
+
+      this.down = __bind(this.down, this);
+
+      this.up = __bind(this.up, this);
+      this.position = new Vector(x, y);
+      this.name = name;
+      this.score = new Score(this);
+      this.dead_snake = null;
+    }
+
+    Player.prototype.died = function() {
+      this.dead_snake = this.snake;
+      this.snake = null;
+      setTimeout(this.spawn, 2100);
+      setTimeout(this.dead_snake.disposeBody, 1700);
+      return this.score.reset();
+    };
+
+    return Player;
+
+  })();
+
+  Score = (function() {
+
+    Score.extend(BaseObject);
+
+    function Score(player) {
+      this.i = 0;
+      this.player = player;
+    }
+
+    Score.prototype.add = function(n) {
+      this.i += n;
+      if (this.i >= game.winningScore) {
+        return game.declareWinner(this.player);
+      }
+    };
+
+    Score.prototype.reset = function() {
+      return this.i = 0;
+    };
+
+    Score.prototype.toString = function() {
+      return this.i;
+    };
+
+    return Score;
+
+  })();
+
+  HUD = (function() {
+
+    HUD.extend(Renderer);
+
+    function HUD() {
+      this.supers();
+      this.labels = [];
+    }
+
+    HUD.prototype.render = function(ctx) {
+      var l, _i, _len, _ref, _results;
+      _ref = this.labels;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        l = _ref[_i];
+        _results.push(l.render(ctx));
+      }
+      return _results;
+    };
+
+    HUD.prototype.add = function(label) {
+      return this.labels.push(label);
+    };
+
+    return HUD;
+
+  })();
+
+  Label = (function() {
+
+    Label.extend(BaseObject);
+
+    Label.extend(Renderable);
+
+    Label.extend(Position);
+
+    function Label(text, pos, font, align, colour, stroke) {
+      if (font == null) {
+        font = "bold 20px sans-serif";
+      }
+      if (align == null) {
+        align = "center";
+      }
+      if (colour == null) {
+        colour = "#FFFFFF";
+      }
+      if (stroke == null) {
+        stroke = false;
+      }
+      this.supers;
+      this.text = text;
+      this.Position(pos);
+      this.font = font;
+      this.align = align;
+      this.colour = colour;
+      this.stroke = stroke;
+    }
+
+    Label.prototype.render = function(ctx) {
+      ctx.font = this.font;
+      ctx.textAlign = this.align;
+      ctx.fillStyle = this.colour;
+      ctx.fillText(this.text, this.position.x, this.position.y);
+      if (this.stroke) {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = this.stroke;
+        return ctx.strokeText(this.text, this.position.x, this.position.y);
+      }
+    };
+
+    return Label;
 
   })();
 

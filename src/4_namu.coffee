@@ -57,18 +57,15 @@ class MenuNamu
 	constructor: (callback) ->
 		@supers()
 		@Renderable(@image)
-		@Position(new Vector(Math.random()*CANVAS_WIDTH*0.8+CANVAS_WIDTH*0.1, Math.random()*CANVAS_HEIGHT*0.6+(CANVAS_HEIGHT*0.3)))
+		@Position(new Vector(Math.random()*CANVAS_WIDTH*0.8+CANVAS_WIDTH*0.1, Math.random()*CANVAS_HEIGHT*0.35+(CANVAS_HEIGHT*0.4)))
 		@Size(new Vector(16, 16))
 		@relocate()
 		@callback = callback
-		@label = new Label(@callback.title, @position.minus(new Vector(0,13)))
+		label = new Label(@callback.title, @position.minus(new Vector(0,13)))
+		game.hud.add(label)
 
 	getsEaten: ->
 		@callback()
-
-	render: (ctx) ->
-		Renderable::render.call(this, ctx)
-		@label.render(ctx)
 
 
 	relocate: ->
