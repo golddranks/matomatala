@@ -1557,6 +1557,79 @@
 
   })();
 
+  Yaoi = (function() {
+
+    Yaoi.extend(Renderer);
+
+    Yaoi.prototype.toString = function() {
+      return "Yaoi";
+    };
+
+    Yaoi.prototype.olli = new LoadedImage("img/olli.png");
+
+    Yaoi.prototype.mika = new LoadedImage("img/mika.png");
+
+    function Yaoi() {
+      this.supers();
+      this.o = new Miekkailija(this.olli, new Vector(130, 220));
+      this.m = new Miekkailija(this.mika, new Vector(270, 220));
+      this.l = new Label("Mika ja Olli, harmoniset värähtelijät.", new Vector(200, 310), "bold 10px sans-serif");
+      this.ll = new Label("YAOI_SHOW", new Vector(200, 130), "bold 20px sans-serif");
+    }
+
+    Yaoi.run = function() {
+      if (this.prototype.instances.length > 0) {
+
+      } else {
+        this.running = new Yaoi();
+      }
+      return this.running.show = true;
+    };
+
+    Yaoi.prototype.render = function(ctx) {
+      if (this.show) {
+        this.l.render(ctx);
+        this.ll.render(ctx);
+        this.o.render(ctx);
+        this.m.render(ctx);
+        return this.show = false;
+      }
+    };
+
+    return Yaoi;
+
+  })();
+
+  Miekkailija = (function() {
+
+    Miekkailija.extend(BaseObject);
+
+    Miekkailija.extend(Renderable);
+
+    Miekkailija.extend(Position);
+
+    Miekkailija.extend(Size);
+
+    Miekkailija.extend(Collision);
+
+    Miekkailija.extend(Movable);
+
+    function Miekkailija(img, pos) {
+      this.supers();
+      this.Position(pos);
+      this.Renderable(img);
+      this.Size(this.render_img.size);
+    }
+
+    Miekkailija.prototype.move = function() {
+      Movable.prototype.move.call(this);
+      return this.accelerate((200 - this.position.x) * 0.5, 0);
+    };
+
+    return Miekkailija;
+
+  })();
+
   CANVAS_WIDTH = 400;
 
   CANVAS_HEIGHT = 400;
@@ -1637,6 +1710,7 @@
     initTwoPlayerGame = function() {
       var bg, wall1, wall2, wall3, wall4;
       Destructable.annihilateEverything();
+      game.won = false;
       game.winningScore = 20;
       game.speedMultiplier = 1;
       game.playerA = new Player(200, 50, "Ylämato");
@@ -1662,6 +1736,7 @@
     initOnePlayerGame = function() {
       var bg, wall1, wall2, wall3, wall4;
       Destructable.annihilateEverything();
+      game.won = false;
       game.winningScore = 20;
       game.speedMultiplier = 1.05;
       game.playerA = new Player(200, 200, "Jäbä");
@@ -1687,7 +1762,7 @@
 
     game.declareWinner = function(player) {
       var l;
-      if (!(game.won != null)) {
+      if (!game.won) {
         game.won = true;
         player.snake.delirium();
         Namu.destroyAll();
@@ -1715,78 +1790,5 @@
 
 
   game();
-
-  Yaoi = (function() {
-
-    Yaoi.extend(Renderer);
-
-    Yaoi.prototype.toString = function() {
-      return "Yaoi";
-    };
-
-    Yaoi.prototype.olli = new LoadedImage("img/olli.png");
-
-    Yaoi.prototype.mika = new LoadedImage("img/mika.png");
-
-    function Yaoi() {
-      this.supers();
-      this.o = new Miekkailija(this.olli, new Vector(130, 220));
-      this.m = new Miekkailija(this.mika, new Vector(270, 220));
-      this.l = new Label("Mika ja Olli, harmoniset värähtelijät.", new Vector(200, 310), "bold 10px sans-serif");
-      this.ll = new Label("YAOI_SHOW", new Vector(200, 130), "bold 20px sans-serif");
-    }
-
-    Yaoi.run = function() {
-      if (this.prototype.instances.length > 0) {
-
-      } else {
-        this.running = new Yaoi();
-      }
-      return this.running.show = true;
-    };
-
-    Yaoi.prototype.render = function(ctx) {
-      if (this.show) {
-        this.l.render(ctx);
-        this.ll.render(ctx);
-        this.o.render(ctx);
-        this.m.render(ctx);
-        return this.show = false;
-      }
-    };
-
-    return Yaoi;
-
-  })();
-
-  Miekkailija = (function() {
-
-    Miekkailija.extend(BaseObject);
-
-    Miekkailija.extend(Renderable);
-
-    Miekkailija.extend(Position);
-
-    Miekkailija.extend(Size);
-
-    Miekkailija.extend(Collision);
-
-    Miekkailija.extend(Movable);
-
-    function Miekkailija(img, pos) {
-      this.supers();
-      this.Position(pos);
-      this.Renderable(img);
-      this.Size(this.render_img.size);
-    }
-
-    Miekkailija.prototype.move = function() {
-      Movable.prototype.move.call(this);
-      return this.accelerate((200 - this.position.x) * 0.5, 0);
-    };
-
-    return Miekkailija;
-
-  })();
 
 }).call(this);

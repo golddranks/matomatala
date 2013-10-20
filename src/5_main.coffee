@@ -71,6 +71,7 @@ game = ->
 	initTwoPlayerGame = ->
 		Destructable.annihilateEverything()
 
+		game.won = false
 		game.winningScore = 20
 		game.speedMultiplier = 1
 
@@ -106,6 +107,7 @@ game = ->
 	initOnePlayerGame = ->
 		Destructable.annihilateEverything()
 
+		game.won = false
 		game.winningScore = 20
 		game.speedMultiplier = 1.05
 
@@ -140,7 +142,7 @@ game = ->
 	### Runtime logic ###
 
 	game.declareWinner = (player) ->
-		if not game.won?
+		if not game.won
 			game.won = true
 			player.snake.delirium()
 			Namu.destroyAll()
